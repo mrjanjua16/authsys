@@ -9,6 +9,9 @@ const app = express();
 // Set the view engine to ejs
 app.set('view engine', 'ejs');
 
+// Static file
+app.use(express.static("public"));
+
 // Set the views directory
 app.set('views', path.join(__dirname, '../views'));
 
