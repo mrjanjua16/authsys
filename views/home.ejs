@@ -3,10 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/style.css">
     <title>Home</title>
-
 </head>
 <body>
-    <h1 style="text-align: center;">Welcome to Home Page</h1>
+    <div class="form-container">
+        <h2>Welcome, <%= user.name %></h2>
+        <div>
+            <h3>Your Data</h3>
+            <p>Username: <%= user.name %></p>
+            <p>Password: ******** (hidden for security reasons)</p>
+        </div>
+        <div>
+            <h3>Actions</h3>
+            <form id="updateUserForm" action="/users/<%= user.name %>" method="post">
+                <input type="hidden" name="_method" value="put">
+                <div class="form-group">
+                    <label for="newPassword">New Password</label>
+                    <input type="password" id="newPassword" name="password" placeholder="Enter new password" required>
+                </div>
+                <button type="submit" class="submit-btn">Update Password</button>
+            </form>
+            <form id="deleteUserForm" action="/users/<%= user.name %>?_method=DELETE" method="post" onsubmit="return confirm('Are you sure you want to delete your account?');">
+                <button type="submit" class="submit-btn">Delete Account</button>
+            </form>
+        </div>
+    </div>
 </body>
 </html>

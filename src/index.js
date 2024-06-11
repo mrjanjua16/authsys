@@ -4,6 +4,7 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
+const methodOverride = require('method-override');
 const collection = require('./config');
 
 const PORT = 5000;
@@ -17,6 +18,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // Use cookie-parser middleware
 app.use(cookieParser());
+// Use method-override middleware to support DELETE method via forms
+app.use(methodOverride('_method'));
 
 // Set the view engine to EJS
 app.set('view engine', 'ejs');
@@ -47,6 +50,7 @@ app.get("/signup", (req, res) => {
     res.render("signup");
 });
 
+// Create (Signup)
 app.post("/signup", async (req, res) => {
     try {
         console.log('Received signup data:', req.body);
@@ -77,6 +81,7 @@ app.post("/signup", async (req, res) => {
     }
 });
 
+// Read (Login)
 app.post("/login", async (req, res) => {
     try {
         const user = await collection.findOne({ name: req.body.username });
@@ -100,4 +105,50 @@ app.post("/login", async (req, res) => {
 
 // Protected route example
 app.get("/home", authenticateToken, (req, res) => {
-    res.render("home", { user: req.user })})
+    res.render("home", { user: req.user });
+});
+
+// Update (Update User Data)
+app.post("/users/:username", authenticateToken, async (req, res) => {
+    try {
+        const hashedPassword = await bcrypt.hash(req.body.password, 10);
+        const user = await collection.findOneAndUpdate(
+            { name: req.params.username },
+            { $set: { password: hashedPassword } },
+            { new: true, runValidators: true }
+        );
+        if (!user) {
+            return res.status(404).send("User not found");
+        }
+        res.redirect("/home");
+    } catch (error) {
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+// Delete (Delete User)
+app.delete("/users/:username", authenticateToken, async (req, res) => {
+    try {
+        const username = req.params.username;
+        console.log(`Attempting to delete user: ${username}`);
+        
+        const user = await collection.findOneAndDelete({ name: username });
+        
+        if (!user) {
+            console.error(`User not found: ${username}`);
+            return res.status(404).send("User not found");
+        }
+        
+        console.log(`User deleted: ${username}`);
+        res.clearCookie('jwt');
+        res.send("User deleted successfully");
+    } catch (error) {
+        console.error('Error during user deletion:', error.message);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+
+app.listen(PORT, () => {
+    console.log(`Server is running on Port ${PORT}`);
+});
